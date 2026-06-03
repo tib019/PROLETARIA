@@ -1,0 +1,24 @@
+[submodule "modules/anti-ki"]
+	path = modules/anti-ki
+	url = https://github.com/tib019/anti-ki
+	branch = main
+
+[submodule "modules/proletaria-llm"]
+	path = modules/proletaria-llm
+	url = https://github.com/tib019/proletaria-llm
+	branch = main
+
+[submodule "modules/interview-copilot"]
+	path = modules/interview-copilot
+	url = https://github.com/tib019/interview-copilot
+	branch = main
+
+[submodule "modules/osint"]
+	path = modules/osint
+	url = https://github.com/tib019/osinttoolprolatraion
+	branch = main
+
+[submodule "modules/cybersyn"]
+	path = modules/cybersyn
+	url = https://github.com/tib019/cybersyn2-hamburg
+	branch = main

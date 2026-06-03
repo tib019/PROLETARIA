@@ -1,0 +1,14 @@
+{
+  "name": "@interview-copilot/verhoer-trainer",
+  "version": "0.1.0",
+  "description": "Verhör-Trainingsmodul für das ANTI-PALANTIR Konglomerat",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
