@@ -1,80 +1,225 @@
 # PROLETARIA
-## Anti-Palantir Konglomerat — Defensive Überwachungsgegeninfrasktur
 
-*Entwickelt von Tobias Buß | 2026*
+> Defensive Gegeninfrastruktur gegen staatliche und kommerzielle Überwachung —
+> und kulturelle Hegemoniearbeit für soziale Bewegungen.
+
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/docker-compose-2496ED.svg)](docker-compose.yml)
+[![Local-first](https://img.shields.io/badge/runs-100%25%20lokal-green.svg)](#opsec-prinzipien)
 
 ---
 
-## Was ist PROLETARIA?
+## Warum PROLETARIA?
 
-PROLETARIA ist das Dach-Repository des Anti-Palantir Konglomerats.
-Es verbindet fünf spezialisierte Module zu einer kohärenten defensiven
-Gegenkraft gegen staatliche und kommerzielle Überwachungsinfrastruktur.
+Palantir analysiert Bewegungen. Clearview identifiziert Gesichter. Pimeyes findet Profile.
+PROLETARIA kehrt diese Logik um:
 
-**PROLETARIA spiegelt Palantir/Clearview/NSO — aber invertiert:**
-Statt Bewegungen zu überwachen, schützt es Bewegungen vor Überwachung.
+| Palantir / Clearview | PROLETARIA |
+|----------------------|-----------|
+| Überwacht Aktivist:innen | Schützt Aktivist:innen vor Überwachung |
+| Aggregiert Daten über Bewegungen | Löscht eigene Datenspuren |
+| Analysiert Kommunikationsmuster | Auditiert eigene OPSEC |
+| Generiert Profile | Generiert DSGVO-Löschanfragen |
+| Beeinflusst öffentliche Narrative | Baut Gegennarrative auf |
+
+Alles läuft lokal. Kein Cloud-Zwang. Kein externes Logging.
 
 ---
 
 ## Module
 
-| Modul | Beschreibung | Repo |
-|-------|-------------|------|
-| **ANTI-KI** | Narrativanalyse + OPSEC-Zentrum | [tib019/anti-ki](https://github.com/tib019/anti-ki) |
-| **ProletariaLLM** | Lokales politisches Sprachmodell | [tib019/proletaria-llm](https://github.com/tib019/proletaria-llm) |
-| **Interview Copilot** | Verhör-Training + Job-Interview | [tib019/interview-copilot](https://github.com/tib019/interview-copilot) |
-| **OSINT Tool** | Öffentliche Quellen-Analyse | [tib019/osinttoolprolatraion](https://github.com/tib019/osinttoolprolatraion) |
-| **Cybersyn 2.0** | Dezentrale Energie-Koordination (Steuerelement) | [tib019/cybersyn2-hamburg](https://github.com/tib019/cybersyn2-hamburg) |
-
----
-
-## Direkt in PROLETARIA enthaltene Module
-
-```
-opsec/               # Defensive Überwachungs-Gegenmodule
-  exposure_scanner.py      — Eigene digitale Spuren erkennen
-  surveillance_db.py       — Wissensbasis: Palantir, Clearview, NSO, BfV...
-  dsgvo_automation.py      — Automatisierte Art.15/17/21-Anfragen
-  comm_pattern_analyzer.py — OPSEC-Audit eigener Kommunikationsstruktur
-  algedonic.py             — Eskalationsprotokoll (nach Cybersyn/Beer)
-
-verhoer-trainer/     # Verhör-Trainingsmodul (TypeScript)
-  src/
-    LegalKnowledgeBase.ts  — § 136/55 StPO, Art. 6 EMRK, Notfallskript
-    scenarios.ts           — 3 Trainingsszenarien
-    TrainingSession.ts     — Turn-basierte Übungseinheit mit Bewertung
-    TacticAnalyzer.ts      — Echtzeit-Erkennung von 8 Verhörtaktiken
-
-llm-server/          # ProletariaLLM als REST API
-  serve.py                 — FastAPI-Server (lokal via Ollama)
-
-cybersyn/            # Cybersyn 2.0 Steuerelement
-  README.md                — Verweis + Integrationsanleitung
-```
+| Modul | Sprache | Funktion |
+|-------|---------|---------|
+| [**OPSEC**](opsec/) | Python | Eigene Spuren scannen, Überwachungsakteure identifizieren, DSGVO-Anfragen automatisieren, Kommunikationsstruktur auditieren |
+| [**Gramsci**](gramsci/) | Python | Politische Inhalte generieren (7 Sprachen, 15+ Kanäle), Narrative analysieren, Kampagnen verwalten — mit Knopfdruck-Freigabe |
+| [**Verhör-Trainer**](verhoer-trainer/) | TypeScript | Interaktives Training für Polizeibefragungen: §136 StPO, Schweigerecht, Taktik-Erkennung |
+| [**LLM-Server**](llm-server/) | Python / FastAPI | Lokale Inferenz-Bridge zu ProletariaLLM via Ollama |
+| [**ANTI-KI**](modules/anti-ki/) | Python / FastAPI | Narrativanalyse, Desinformationserkennung, Gegennarrativ-Engine, Neo4j-Wissensgraph |
+| [**ProletariaLLM**](modules/proletaria-llm/) | Python | Fine-tuned Mistral-7B auf politischem Corpus (Marx, Gramsci, Netzpolitik) |
+| [**Interview Copilot**](modules/interview-copilot/) | TypeScript | Echtzeit-Transkription und Gesprächsunterstützung |
+| [**OSINT Tool**](modules/osint/) | Python | Öffentliche Quellen-Analyse, Akteur-Recherche, Netzwerk-Visualisierung |
+| [**Cybersyn 2.0**](modules/cybersyn/) | Python | Dezentrale Energie-Koordination (VSM-Modell, read-only Steuerelement) |
 
 ---
 
 ## Schnellstart
 
+### Vollständiger Stack (Docker)
+
 ```bash
-# 1. Repository mit Submodulen klonen
+# Repository mit allen Submodulen klonen
 git clone --recurse-submodules https://github.com/tib019/PROLETARIA
+cd PROLETARIA
 
-# 2. Setup
-bash setup.sh
+# Umgebungsvariablen konfigurieren
+cp modules/anti-ki/config/.env.example modules/anti-ki/config/.env
 
-# 3. Stack starten
+# Stack starten (Ollama + Neo4j + API-Services)
 docker compose up -d
+
+# Status prüfen
+curl http://localhost:8000/health   # ANTI-KI API
+curl http://localhost:8001/health   # LLM-Server
+```
+
+### Nur Gramsci (ohne Docker)
+
+```bash
+pip install -r requirements.txt
+ollama pull mistral  # oder eigenes ProletariaLLM-Modell
+
+# Inhalt generieren und interaktiv freigeben
+python -m gramsci generate "Mietpreisbremse verlängern" --platform mastodon --lang de
+
+# Kampagnen-Übersicht
+python -m gramsci dashboard
 ```
 
 ---
 
-## OPSEC-Grundprinzipien
+## Gramsci — Kulturelle Hegemoniearbeit
 
-1. **Lokal first** — Kein Modul erfordert Cloud-API-Keys
-2. **Kein Logging** — Sensible Analysen werden nicht extern gespeichert
-3. **Selbst-Audit** — PROLETARIA prüft sich mit eigenen OPSEC-Tools
-4. **Dezentralisierung** — Kein Single-Point-of-Failure
-5. **Rechtliche Absicherung** — Alle Features basieren auf legalen Mitteln
+Das Gramsci-Modul unterstützt politische Kommunikation auf allen öffentlichen Arenen.
+Benannt nach Antonio Gramsci (1891–1937): Hegemonie wird nicht nur durch Zwang,
+sondern durch Diskursmacht gesichert. Gegenhegemonie bricht diesen Konsens.
 
-Siehe [KONGLOMERAT.md](./KONGLOMERAT.md) für vollständige Architektur-Dokumentation.
+**Unterstützte Kanäle:**
+
+| Bereich | Kanäle |
+|---------|--------|
+| Social Media | Mastodon, Twitter/X, Telegram, Facebook Pages, Instagram Business, TikTok |
+| Langform | Reddit, Blogs, Newsletters |
+| Kommentare | YouTube, Nachrichtenseiten |
+| Zivilgesellschaft | Campact, Change.org, OpenPetition, Bürgerbeteiligung |
+| Medien | Pressemitteilungen, Leserbriefe |
+| Print | Flyer (HTML/TXT-Export), Newsletter (SMTP) |
+
+**Sprachen:** DE · EN · FR · NL · ES · IT · PL
+
+**Knopfdruck-Prinzip:** Kein Inhalt wird ohne explizite menschliche Freigabe veröffentlicht.
+Das `ReviewCLI` zeigt jeden Entwurf an — Freigabe, Ablehnung oder Bearbeitung liegt beim Menschen.
+
+```
+═══════════════════════════════════════════════════════════
+  GRAMSCI — INHALTSPRÜFUNG
+═══════════════════════════════════════════════════════════
+
+  Typ: short_post | Plattform: mastodon | Sprache: de | Zeichen: 312
+  ✓ passt
+
+  ┌─ INHALT ────────────────────────────────────────────────
+  │ Während Mieter:innen in Hamburg im Durchschnitt 42% ihres
+  │ Einkommens für Wohnen aufwenden, verbuchen die zehn größten
+  │ Immobilienkonzerne Rekordgewinne. Die Mietpreisbremse muss
+  │ nicht nur verlängert, sondern verschärft werden. #Wohnen
+  └─────────────────────────────────────────────────────────
+
+  [ENTER] Freigeben  [e] Bearbeiten  [n] Ablehnen  [q] Abbrechen
+  >
+```
+
+---
+
+## OPSEC — Selbstschutz vor Überwachung
+
+```python
+from opsec import ExposureScanner, DSGVOAutomation, SurveillanceDB
+
+# Eigenen Text auf PII / Credentials scannen
+scanner = ExposureScanner()
+result = scanner.scan("Mein Passwort ist abc123, ich wohne in der Musterstr. 1")
+# → risk_level: KRITISCH | findings: [PASSWORD, ADDRESS]
+
+# DSGVO-Auskunftsanfrage an BKA generieren
+dsgvo = DSGVOAutomation()
+letter = dsgvo.create_request(
+    request_type="auskunft",
+    controller="Bundeskriminalamt",
+    requester_name="Max Muster"
+)
+
+# Überwachungsakteure prüfen
+db = SurveillanceDB()
+actors = db.query_by_threat_level("KRITISCH")
+```
+
+---
+
+## Architektur
+
+```
+PROLETARIA/
+├── opsec/              # Defensive OPSEC-Module
+├── gramsci/            # Politische Kommunikation
+│   ├── core/           #   ContentEngine, NarrativeRadar, CampaignManager
+│   ├── channels/       #   15+ Kanal-Adapter
+│   └── ui/             #   ReviewCLI (Knopfdruck), Dashboard
+├── verhoer-trainer/    # Verhör-Training (TypeScript)
+├── llm-server/         # ProletariaLLM-Bridge (FastAPI)
+├── modules/            # Git-Submodule
+│   ├── anti-ki/        #   Narrativanalyse-API
+│   ├── proletaria-llm/ #   Finetuned Sprachmodell
+│   ├── interview-copilot/
+│   ├── osint/
+│   └── cybersyn/       #   Read-only Steuerelement
+└── docs/               # Vollständige Dokumentation
+    ├── architecture/   #   C4-Diagramme
+    ├── uml/            #   Klassen-, Sequenz-, Use-Case-Diagramme
+    ├── adr/            #   Architecture Decision Records
+    ├── guides/         #   Developer, Gramsci, OPSEC, Verhör, Deployment
+    └── planning/       #   Roadmap, Milestones, Backlog
+```
+
+→ Vollständige Architektur: [C4 Container-Diagramm](docs/architecture/C4_container.md)
+
+---
+
+## OPSEC-Prinzipien
+
+1. **Lokal first** — Kein Modul erfordert Cloud-API-Keys oder externe Dienste
+2. **Kein Logging** — Sensible Analysen verlassen das System nicht
+3. **Knopfdruck-Prinzip** — Kein KI-generierter Inhalt wird ohne Freigabe veröffentlicht
+4. **Dezentralisierung** — Kein Single-Point-of-Failure, keine zentrale Infrastruktur
+5. **Rechtliche Absicherung** — Alle Features basieren auf Grundrechten (DSGVO, Art. 10 GG)
+
+---
+
+## Dokumentation
+
+| Guide | Inhalt |
+|-------|--------|
+| [Laien-Guide](docs/guides/LAIEN_GUIDE.md) | Einstieg ohne Programmierkenntnisse |
+| [Gramsci-Guide](docs/guides/GRAMSCI_GUIDE.md) | Kampagnen, Kanäle, ReviewCLI, NarrativeRadar |
+| [OPSEC-Guide](docs/guides/OPSEC_GUIDE.md) | ExposureScanner, SurveillanceDB, DSGVO |
+| [Verhör-Guide](docs/guides/VERHOER_GUIDE.md) | Trainingsszenarien, Rechte, Notfallskript |
+| [Developer Guide](docs/guides/DEVELOPER_GUIDE.md) | Neue Module, Adapter, Architektur-Entscheidungen |
+| [Deployment Guide](docs/guides/DEPLOYMENT_GUIDE.md) | Docker, Ollama, Umgebungsvariablen |
+
+---
+
+## Systemanforderungen
+
+| Komponente | Minimum | Empfohlen |
+|-----------|---------|-----------|
+| RAM | 16 GB | 32 GB |
+| GPU | — | NVIDIA ≥ 8 GB VRAM |
+| Speicher | 50 GB | 100 GB SSD |
+| Docker | ≥ 24.0 | aktuell |
+| Python | ≥ 3.11 | 3.12 |
+
+---
+
+## Rechtliches
+
+PROLETARIA ist freie Software (AGPL-3.0). Alle implementierten Funktionen
+basieren auf legalen Mitteln: DSGVO-Auskunftsrechte (Art. 15), Schweigerecht
+(§136 StPO), öffentliche Kommunikation, Open-Source-Entwicklung.
+
+Die Nutzung für Überwachung Dritter, Spam oder nicht autorisierte Eingriffe
+widerspricht dem Projektzweck und ist nicht erlaubt.
+
+---
+
+*Entwickelt von Tobias Buß · 2026*
+*Benannt nach Antonio Gramsci (1891–1937) — Vordenker der Theorie kultureller Hegemonie*

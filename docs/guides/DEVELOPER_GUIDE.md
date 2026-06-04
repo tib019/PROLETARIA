@@ -6,6 +6,26 @@
 
 ```
 PROLETARIA/
+├── gramsci/                  # Python: Gramsci-Modul (Hegemoniearbeit)
+│   ├── __init__.py
+│   ├── __main__.py           # CLI-Einstiegspunkt: python -m gramsci
+│   ├── config.py             # load_env(), get_channel_credentials()
+│   ├── core/
+│   │   ├── content_engine.py     # ContentEngine, ContentType, GeneratedContent
+│   │   ├── campaign_manager.py   # CampaignManager, Campaign, CampaignItem
+│   │   ├── narrative_radar.py    # NarrativeRadar, NarrativeAnalysis
+│   │   └── hegemony_analyzer.py  # HegemonieAnalyzer
+│   ├── channels/
+│   │   ├── base.py               # BaseChannelAdapter, PublishResult
+│   │   ├── social/               # Mastodon, Twitter, Reddit, Telegram, Facebook, Instagram, TikTok
+│   │   ├── comments/             # YouTube, NewsSite
+│   │   ├── civic/                # Petition, PublicConsultation
+│   │   ├── media/                # PressRelease, LetterToEditor
+│   │   └── print/                # FlyerGenerator, Newsletter
+│   └── ui/
+│       ├── review_cli.py         # ReviewCLI (Terminal-Interface)
+│       └── dashboard.py          # Dashboard (Kampagnen-Übersicht)
+│
 ├── opsec/                    # Python: OPSEC-Kernmodule
 │   ├── __init__.py
 │   ├── exposure_scanner.py   # Credential/PII/Infrastruktur-Scanner
@@ -42,12 +62,197 @@ PROLETARIA/
 │   ├── uml/                  # Klassen-, Sequenz-, Use-Case-Diagramme
 │   ├── adr/                  # Architecture Decision Records
 │   ├── planning/             # Roadmap, Milestones, Backlog
-│   └── guides/               # Diese Datei + OPSEC/Verhör/Deployment
+│   └── guides/               # Diese Datei + OPSEC/Verhör/Deployment/Gramsci
 │
 ├── docker-compose.yml        # Gesamtstack
 ├── requirements.txt          # Python-Dependencies
 ├── setup.sh                  # Setup-Skript
 └── .gitmodules               # Submodul-Konfiguration
+```
+
+---
+
+## Neuen Kanal-Adapter hinzufügen
+
+Gramsci unterstützt beliebige neue Kanäle über das `BaseChannelAdapter`-Protokoll. Das Guard-Prinzip (`approved=True` vor Publish) wird von der Basisklasse erzwungen — der neue Adapter muss sich darum nicht kümmern.
+
+### 1. Adapter-Datei erstellen
+
+Zum Beispiel `gramsci/channels/social/bluesky.py`:
+
+```python
+"""
+BlueSkyAdapter — Veröffentlichung auf Bluesky (AT Protocol)
+"""
+from __future__ import annotations
+
+import os
+import requests
+from ...channels.base import BaseChannelAdapter, PublishResult
+from ...core.content_engine import GeneratedContent
+
+
+class BlueSkyAdapter(BaseChannelAdapter):
+    channel_name = "bluesky"
+
+    def __init__(self):
+        self.handle = os.environ.get("BLUESKY_HANDLE", "")
+        self.app_password = os.environ.get("BLUESKY_APP_PASSWORD", "")
+        self.pds_url = os.environ.get("BLUESKY_PDS_URL", "https://bsky.social")
+
+    def validate_credentials(self) -> bool:
+        return bool(self.handle and self.app_password)
+
+    def _do_publish(self, content: GeneratedContent) -> PublishResult:
+        # Guard wurde bereits in BaseChannelAdapter.publish() geprüft
+        if not self.validate_credentials():
+            return PublishResult(
+                success=False,
+                error="BLUESKY_HANDLE oder BLUESKY_APP_PASSWORD fehlt in .env",
+                channel=self.channel_name,
+            )
+        try:
+            # 1. Session erstellen
+            session = requests.post(
+                f"{self.pds_url}/xrpc/com.atproto.server.createSession",
+                json={"identifier": self.handle, "password": self.app_password},
+                timeout=10,
+            ).json()
+            token = session["accessJwt"]
+
+            # 2. Post senden
+            resp = requests.post(
+                f"{self.pds_url}/xrpc/com.atproto.repo.createRecord",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "repo": session["did"],
+                    "collection": "app.bsky.feed.post",
+                    "record": {
+                        "$type": "app.bsky.feed.post",
+                        "text": content.final_text,
+                        "createdAt": content.platform,
+                    },
+                },
+                timeout=10,
+            ).json()
+            uri = resp.get("uri", "")
+            return PublishResult(success=True, url=uri, channel=self.channel_name)
+        except Exception as exc:
+            return PublishResult(success=False, error=str(exc), channel=self.channel_name)
+```
+
+### 2. In `gramsci/channels/social/__init__.py` exportieren
+
+```python
+from .bluesky import BlueSkyAdapter
+
+__all__ = [
+    ...,
+    "BlueSkyAdapter",
+]
+```
+
+### 3. In `gramsci/channels/__init__.py` exportieren
+
+```python
+from .social import (
+    MastodonAdapter, TwitterAdapter, ..., BlueSkyAdapter,
+)
+__all__ = [..., "BlueSkyAdapter"]
+```
+
+### 4. `.env`-Variablen dokumentieren
+
+In `docs/guides/GRAMSCI_GUIDE.md` in der Kanäle-Tabelle ergänzen:
+
+| Variable | Pflicht | Beschreibung |
+|----------|---------|--------------|
+| `BLUESKY_HANDLE` | ja | Handle z.B. `name.bsky.social` |
+| `BLUESKY_APP_PASSWORD` | ja | App-Passwort aus Bluesky-Settings |
+| `BLUESKY_PDS_URL` | nein | Standard: `https://bsky.social` |
+
+### 5. FORMAT_LIMITS ergänzen (optional)
+
+In `gramsci/core/content_engine.py` das Zeichenlimit eintragen:
+
+```python
+FORMAT_LIMITS = {
+    ...,
+    "bluesky": 300,
+}
+```
+
+---
+
+## Gramsci-Kampagne programmieren
+
+Vollständige Kampagne per Python-API ohne CLI:
+
+```python
+from gramsci import load_env, CampaignManager, ContentType, ReviewCLI
+from gramsci.channels import MastodonAdapter, TelegramAdapter
+
+# 1. Credentials aus .env laden
+load_env()
+
+# 2. Kampagne erstellen — ContentEngine generiert automatisch für alle Kombinationen
+manager = CampaignManager()
+campaign = manager.create(
+    name="Mietpreisbremse-Kampagne",
+    topic="Die Mietpreisbremse versagt. Wir brauchen echte Vergesellschaftung.",
+    platforms=["mastodon", "telegram", "press_release"],
+    languages=["de", "en"],
+    content_type=ContentType.SHORT_POST,
+)
+print(f"Kampagne erstellt: {campaign.id} ({campaign.total_items} Items)")
+
+# 3. Im ReviewCLI freigeben (interaktiv)
+cli = ReviewCLI(manager)
+cli.review_campaign(campaign)
+
+# 4. Freigegebene Items veröffentlichen
+adapters = {
+    "mastodon": MastodonAdapter(),
+    "telegram": TelegramAdapter(),
+}
+
+for item in campaign.items:
+    if item.content.approved and item.channel_adapter in adapters:
+        result = adapters[item.channel_adapter].publish(item.content)
+        print(result)
+        if result.success:
+            item.published_at = __import__("datetime").datetime.now().isoformat()
+            item.publish_url = result.url
+
+manager.save(campaign)
+```
+
+### NarrativeRadar in Kampagne integrieren
+
+```python
+from gramsci import NarrativeRadar, ContentEngine, ContentType
+
+radar = NarrativeRadar()
+engine = ContentEngine()
+
+# Aktuellen Diskurs analysieren
+analyse = radar.analyze(
+    "Die Klimakleber blockieren die Wirtschaft und gefährden Leben."
+)
+print(f"Narrativ: {analyse.narrative_type.value}")
+print(f"Bedrohung: {analyse.threat_level.value}")
+print(f"Erkannte Frames: {', '.join(analyse.detected_frames)}")
+
+# Gegennarrativ direkt als Kontext für ContentEngine nutzen
+gegennarrativ = radar.generate_counter(analyse)
+inhalt = engine.generate(
+    topic="Klimagerechtigkeit und Aktionsformen",
+    content_type=ContentType.SHORT_POST,
+    platform="mastodon",
+    language="de",
+    context=f"Gegennarrativ zu: {gegennarrativ}",
+)
+print(inhalt.final_text)
 ```
 
 ---

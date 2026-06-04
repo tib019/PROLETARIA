@@ -14,6 +14,7 @@ C4Container
 
     Person(aktivist, "Aktivist:in / Nutzer:in", "Browser oder Desktop")
     Person(forscher, "Forscher:in", "Browser oder API-Client")
+    Person(kommunikator, "Kommunikator:in", "Terminal / Gramsci CLI")
 
     System_Boundary(proletaria, "PROLETARIA") {
 
@@ -25,9 +26,12 @@ C4Container
         Container(interview_copilot, "Interview Copilot", "TypeScript / Electron", "Audio-Pipeline, Echtzeit-Transkription, Job-Interview-KI. Desktop-App.")
         Container(frontend, "Web-Frontend", "React / TypeScript", "Einheitliche Web-UI für ANTI-KI, OSINT, OPSEC. Port :3000")
 
+        Container(gramsci, "Gramsci", "Python (lokal / CLI)", "Kulturelle Hegemoniearbeit. ContentEngine, CampaignManager, NarrativeRadar, ReviewCLI, 14 Kanal-Adapter. Kein eigener Port — CLI-Tool.")
+
         ContainerDb(neo4j, "Neo4j", "Graphdatenbank", "Narrativ-Graphen, Akteur-Beziehungen, OSINT-Verknüpfungen. Port :7687")
         ContainerDb(chromadb, "ChromaDB", "Vektordatenbank", "RAG-Embeddings für Narrativanalyse und OPSEC-Kontext. Port :8004")
         ContainerDb(sqlite_opsec, "SQLite / OPSEC-DB", "Datei-Datenbank", "Lokale Persistenz: ExposureFindings, SurveillanceActors, DSGVORequests, CommEvents")
+        ContainerDb(sqlite_gramsci, "SQLite / Gramsci-DB", "Datei-Datenbank (JSON)", "Kampagnen-Persistenz: Campaign, CampaignItem, GeneratedContent. Pfad: .gramsci_campaigns/")
 
         Container(ollama, "Ollama", "LLM-Runtime", "Lokale Inferenz: mistral:7b, proletaria-llm (fine-tuned). Port :11434")
     }
@@ -35,12 +39,15 @@ C4Container
     System_Ext(entso_e, "ENTSO-E API", "Energiedaten")
     System_Ext(dsgvo_behoerde, "Datenschutzbehörde", "DSGVO-Aufsicht")
     System_Ext(surveillance_targets, "Überwachungsakteure", "Palantir, Clearview, BfV etc.")
+    System_Ext(soziale_netzwerke, "Soziale Plattformen", "Mastodon, Twitter, Telegram, Reddit, Facebook, Instagram, TikTok")
+    System_Ext(medien_plattformen, "Medien / Zivilgesellschaft", "YouTube, Petition-Plattformen, Zeitungsredaktionen, Newsletter-Systeme")
 
     Rel(aktivist, frontend, "Nutzt Web-UI", "HTTPS :3000")
     Rel(aktivist, verhoer_trainer, "Trainiert Verhöre", "Electron / lokal")
     Rel(aktivist, interview_copilot, "Jobinterview-Training", "Electron / lokal")
     Rel(forscher, anti_ki_api, "Direkter API-Zugriff", "HTTP :8000")
     Rel(forscher, osint_api, "Direkter API-Zugriff", "HTTP :8002")
+    Rel(kommunikator, gramsci, "CLI: generate / review / campaign", "Terminal / python -m gramsci")
 
     Rel(frontend, anti_ki_api, "Narrativanalyse-Requests", "HTTP REST")
     Rel(frontend, opsec_api, "OPSEC-Scan, DSGVO-Anfragen", "HTTP REST")
@@ -61,6 +68,11 @@ C4Container
 
     Rel(verhoer_trainer, llm_server, "Szenarien-KI, Taktik-Analyse", "HTTP :8001")
     Rel(interview_copilot, llm_server, "Interview-KI", "HTTP :8001")
+
+    Rel(gramsci, llm_server, "Inhaltsgenerierung via ContentEngine", "HTTP :8001")
+    Rel(gramsci, sqlite_gramsci, "Kampagnen laden / speichern", "JSON / Dateisystem")
+    Rel(gramsci, soziale_netzwerke, "Veröffentlichen (nach Approve)", "HTTPS API")
+    Rel(gramsci, medien_plattformen, "Veröffentlichen (nach Approve)", "HTTPS / E-Mail / API")
 
     Rel(opsec_api, dsgvo_behoerde, "Beschwerde-Eskalation", "HTTPS / E-Mail")
     Rel(opsec_api, surveillance_targets, "DSGVO-Anfragen senden", "HTTPS / E-Mail")
@@ -84,6 +96,7 @@ C4Container
 - **Aufgabe**: Einheitliche Bridge für alle LLM-Anfragen im Stack. Leitet an Ollama weiter, verwaltet Prompts, handhabt Streaming.
 - **Modelle**: `mistral:7b` (Basis), `proletaria-llm` (fine-tuned für politische Sprache)
 - **Pfad**: `llm-server/serve.py`
+- **Konsumenten**: ANTI-KI API, OPSEC API, OSINT API, Verhör-Trainer, Interview Copilot, **Gramsci**
 
 #### OSINT API (`:8002`)
 - **Technologie**: Python 3.11, FastAPI
@@ -94,6 +107,21 @@ C4Container
 - **Technologie**: Python 3.11, FastAPI
 - **Aufgabe**: ExposureScanner, SurveillanceDB, DSGVOAutomation, CommPatternAnalyzer, OpsecAlgedonicChannel als REST-API.
 - **Pfad**: `opsec/`
+
+### Gramsci (CLI-Tool, kein eigener Server)
+
+- **Technologie**: Python 3.11, keine externen Abhängigkeiten außer `requests`
+- **Aufgabe**: Kulturelle Hegemoniearbeit. Generiert politische Texte für alle Plattformen, koordiniert Kampagnen, erzwingt menschliche Freigabe vor Publish.
+- **Pfad**: `gramsci/`
+- **Schlüsselkomponenten**:
+  - `ContentEngine` — Prompt-Bau + LLM-Aufruf + Limit-Trimming
+  - `CampaignManager` — JSON-Persistenz, Kampagnen-Lebenszyklus
+  - `NarrativeRadar` — Frame-Erkennung + Gegennarrativ-Kontext
+  - `ReviewCLI` — Terminal-Interface mit Knopfdruck-Prinzip
+  - 14 Kanal-Adapter (Social, Kommentare, Zivilgesellschaft, Medien, Print)
+- **Besonderheit**: Kein Inhalt verlässt das System ohne `approved=True`. Guard-Clause in `BaseChannelAdapter.publish()` ist nicht umgehbar.
+- **Datenhaltung**: Kampagnen als JSON-Dateien in `.gramsci_campaigns/` (konfigurierbar via `GRAMSCI_CAMPAIGN_DIR`)
+- **Sprachen**: DE (primär), EN, FR, NL, ES, IT, PL
 
 ### Frontend-Anwendungen
 
@@ -127,6 +155,11 @@ C4Container
 - **Inhalt**: ExposureFindings, SurveillanceActors, DSGVORequests, CommEvents
 - **Ort**: `opsec/data/opsec.db`
 
+#### SQLite / Gramsci-DB (lokal, JSON-Dateien)
+- **Typ**: JSON-Dateien im Verzeichnis `.gramsci_campaigns/`
+- **Inhalt**: Campaign-Objekte mit CampaignItems (GeneratedContent, Publish-Status, URLs)
+- **Konfiguration**: `GRAMSCI_CAMPAIGN_DIR` in `.env`
+
 #### Ollama (`:11434`)
 - **Typ**: LLM-Runtime
 - **Modelle**: `mistral:7b`, `proletaria-llm` (fine-tuned Mistral via QLoRA)
@@ -142,10 +175,16 @@ Nutzer:in → Frontend (:3000)
          → ANTI-KI API (:8000) → ChromaDB, Neo4j, LLM Server (:8001)
          → OSINT API (:8002) → Neo4j, LLM Server
 
+Kommunikator:in → Gramsci CLI
+              → LLM Server (:8001) → Ollama (:11434)
+              → .gramsci_campaigns/ (JSON)
+              → Soziale Plattformen (nach Approve)
+
 LLM Server (:8001) → Ollama (:11434)
 
 OPSEC API → (extern) Datenschutzbehörde, Auskunftsstellen
 OSINT API → (extern, read-only) ENTSO-E
+Gramsci   → (extern, nur nach approved=True) Soziale Netzwerke, Medien
 ```
 
-Alle internen Verbindungen laufen im isolierten Docker-Netzwerk `proletaria-net`. Kein Container ist standardmäßig von außen erreichbar außer Frontend und den APIs via explizites Port-Mapping.
+Alle internen Verbindungen laufen im isolierten Docker-Netzwerk `proletaria-net`. Kein Container ist standardmäßig von außen erreichbar außer Frontend und den APIs via explizites Port-Mapping. Gramsci läuft vollständig lokal ohne eigenen Port.
