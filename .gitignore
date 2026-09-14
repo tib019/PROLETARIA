@@ -1,0 +1,26 @@
+# Abhaengigkeiten
+node_modules/
+.pnpm-store/
+
+# Build-Ausgaben
+dist/
+build/
+*.tsbuildinfo
+
+# Test- und Tooling-Caches
+.vite/
+coverage/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Umgebung
+.env
+.env.*
+!.env.example
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
