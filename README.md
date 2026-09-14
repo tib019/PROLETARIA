@@ -1,7 +1,6 @@
 # PROLETARIA
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
-![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 
 > Defensive Gegeninfrastruktur gegen staatliche und kommerzielle Überwachung —
 > und kulturelle Hegemoniearbeit für soziale Bewegungen.
