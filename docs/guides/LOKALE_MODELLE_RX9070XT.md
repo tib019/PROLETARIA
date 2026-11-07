@@ -33,6 +33,10 @@ der CPU. Lösung:
 - in `anti-ki` (Gesamtstack und `llm_core/`) dafür:
   `docker compose -f docker-compose.yml -f docker-compose.amd.yml up -d`
 
+**Prüfen, ob die GPU wirklich rechnet:** `anti-ki/scripts/check_amd_gpu.sh`. Das Skript prüft
+Treiber, Image, GPU-Erkennung und `ollama ps` (Anteil GPU/CPU) und misst die Tokens pro Sekunde.
+Optionen: `--stack root|core`, `--model`, `--ctx`, `--no-start`.
+
 Die RX 9070 XT (RDNA 4, `gfx1201`) wird offiziell erst ab **ROCm 7.2** unterstützt. Erkennt
 Ollama die Karte nicht, `HSA_OVERRIDE_GFX_VERSION=12.0.1` setzen.
 Ohne Docker geht alternativ llama.cpp mit dem **Vulkan**-Backend. Das braucht kein ROCm
