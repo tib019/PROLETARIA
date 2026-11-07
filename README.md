@@ -67,7 +67,7 @@ curl http://localhost:8001/health   # LLM-Server
 
 ```bash
 pip install -r requirements.txt
-ollama pull mistral  # oder eigenes ProletariaLLM-Modell
+ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL  # Ersatzmodell, oder eigenes ProletariaLLM-Modell
 
 # Inhalt generieren und interaktiv freigeben
 python -m gramsci generate "Mietpreisbremse verlängern" --platform mastodon --lang de

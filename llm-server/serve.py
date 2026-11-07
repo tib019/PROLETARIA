@@ -23,7 +23,8 @@ from pydantic import BaseModel
 
 OLLAMA_URL   = os.getenv("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = os.getenv("PROLETARIA_MODEL", "proletaria-llm")
-FALLBACK_MODEL = "mistral"
+# Ersatz, wenn das eigene Modell fehlt: Qwen 3.8-27B, 16-GB-Variante
+FALLBACK_MODEL = os.getenv("PROLETARIA_FALLBACK_MODEL", "hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL")
 
 app = FastAPI(
     title="ProletariaLLM API",
@@ -86,10 +87,10 @@ def _active_model() -> str:
     try:
         resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
         if resp.ok:
-            names = [m["name"] for m in resp.json().get("models", [])]
-            if any(DEFAULT_MODEL in n for n in names):
+            names = [m["name"].lower() for m in resp.json().get("models", [])]
+            if any(DEFAULT_MODEL.lower() in n for n in names):
                 return DEFAULT_MODEL
-            if any(FALLBACK_MODEL in n for n in names):
+            if any(FALLBACK_MODEL.lower() in n for n in names):
                 return FALLBACK_MODEL
     except Exception:
         pass

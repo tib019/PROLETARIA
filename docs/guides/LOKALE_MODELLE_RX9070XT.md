@@ -42,19 +42,22 @@ und ist auf RDNA 4 oft genauso schnell.
 
 Alle Module sprechen Ollama an. Das Modell wird per Umgebungsvariable gesetzt:
 
-| Modul | Variable | aktueller Default |
+| Modul | Variable | Default |
 |---|---|---|
-| `PROLETARIA/llm-server` | `PROLETARIA_MODEL` | `proletaria-llm` → Fallback `mistral` |
-| `anti-ki` | `LLM_MODEL` | `mistral` |
-| `proletaria-llm/proletariallm` (CLI) | `PROLETARIA_MODEL` | `qwen2.5-coder:7b` |
+| `PROLETARIA/llm-server` | `PROLETARIA_MODEL` / `PROLETARIA_FALLBACK_MODEL` | `proletaria-llm` → Ersatz Qwen 3.8-27B |
+| `proletaria-llm/inference/chat.py` | `--model` | `proletaria-llm` → Ersatz Qwen 3.8-27B |
+| `anti-ki` | `LLM_MODEL` | Qwen 3.8-27B (`llm_core` lädt es automatisch) |
+| `proletaria-llm/proletariallm` (CLI) | `PROLETARIA_MODEL` | `proletaria-stub` (Testmodus), Beispiel nutzt Qwen 3.8-27B |
 
-GGUF direkt von Hugging Face in Ollama holen (Platzhalter `<repo>` durch das echte
-Unsloth-GGUF-Repo ersetzen):
+Qwen 3.8-27B steht überall als `hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL`
+(Repo geprüft: 13,15 GB; `:UD-Q4_K_M` = 16,46 GB).
+
+GGUF direkt von Hugging Face in Ollama holen:
 
 ```bash
-ollama pull hf.co/<repo>:UD-Q3_K_XL     # Qwen 3.8-27B
-ollama pull hf.co/<repo>:Q4_K_M         # Qwen 3.6-35B-A3B
-export LLM_MODEL=hf.co/<repo>:UD-Q3_K_XL
+ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
+ollama pull hf.co/unsloth/<Qwen3.6-35B-A3B-Repo>:Q4_K_M   # Repo-Namen vorher prüfen
+export LLM_MODEL=hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
 ```
 
 Für MoE-Modelle mit llama.cpp die Experten in den RAM legen und den Rest auf die GPU:
