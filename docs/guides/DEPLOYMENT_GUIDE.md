@@ -13,7 +13,9 @@
 | Node.js | ≥ 20 | verhoer-trainer bauen |
 
 Hardware (Minimum): 16 GB RAM, 50 GB Speicher
-Hardware (Empfohlen): 32 GB RAM, NVIDIA GPU ≥ 8 GB VRAM, 100 GB SSD
+Hardware (Empfohlen): 32 GB RAM, GPU ≥ 16 GB VRAM (NVIDIA oder AMD mit ROCm 7.2+), 100 GB SSD
+
+Modellwahl und AMD-Einrichtung: [Lokale Modelle / RX 9070 XT](LOKALE_MODELLE_RX9070XT.md)
 
 ---
 
@@ -52,8 +54,8 @@ OLLAMA_URL=http://ollama:11434
 # Ollama starten (falls nicht als Service)
 ollama serve &
 
-# Basis-Modell laden
-ollama pull mistral
+# Ersatzmodell laden: Qwen 3.8-27B, 16-GB-Variante (~13 GB)
+ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
 
 # Nach ProletariaLLM Fine-Tuning:
 # ollama create proletaria-llm -f Modelfile
@@ -63,6 +65,8 @@ ollama pull mistral
 
 ```bash
 docker compose up -d
+# Mit AMD-GPU (ROCm 7.2+):
+# docker compose -f docker-compose.yml -f docker-compose.amd.yml up -d
 
 # Status prüfen
 docker compose ps

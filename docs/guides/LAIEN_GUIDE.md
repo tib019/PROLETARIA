@@ -38,8 +38,9 @@ Ollama ist das Programm das die KI lokal auf deinem Computer laufen lässt.
 → Gehe auf **https://ollama.ai**  
 → Lade Ollama herunter und installiere es  
 → Öffne das Terminal (Windows: Suche "cmd", Mac: Suche "Terminal")  
-→ Tippe: `ollama pull mistral` und drücke Enter  
-→ Warte bis der Download fertig ist (ca. 4 GB)
+→ Tippe: `ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL` und drücke Enter  
+→ Warte bis der Download fertig ist (ca. 13 GB)  
+→ Hast du eine Grafikkarte mit weniger als 16 GB Speicher? Dann frag nach einem kleineren Modell, sonst wird es sehr langsam
 
 ### Schritt 3: Git installieren
 

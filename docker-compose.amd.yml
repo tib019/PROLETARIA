@@ -1,0 +1,19 @@
+# PROLETARIA – AMD/ROCm-Override (z. B. RX 9070 XT)
+#
+# docker compose -f docker-compose.yml -f docker-compose.amd.yml up -d
+#
+# Ohne diese Datei läuft Ollama im Gesamtstack nur auf der CPU.
+# Voraussetzung: ROCm-Treiber auf dem Host (RDNA 4 / gfx1201 offiziell ab ROCm 7.2).
+# Erkennt Ollama die Karte nicht: HSA_OVERRIDE_GFX_VERSION=12.0.1 ergänzen.
+# Prüfen: modules/anti-ki/scripts/check_amd_gpu.sh --no-start --container proletaria-ollama
+
+services:
+  ollama:
+    image: ollama/ollama:rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0

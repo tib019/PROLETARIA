@@ -25,17 +25,18 @@ Grenzen bei 16 GB:
 ## AMD-spezifisch: ROCm statt CUDA
 
 Die Docker-Compose-Dateien in `anti-ki` reservieren eine **NVIDIA**-GPU
-(`driver: nvidia`). Auf der RX 9070 XT greift das nicht, Ollama läuft dann nur auf
-der CPU. Lösung:
+(`driver: nvidia`), der PROLETARIA-Gesamtstack gar keine. Auf der RX 9070 XT läuft
+Ollama dann nur auf der CPU. Lösung:
 
 - Ollama-Image `ollama/ollama:rocm` verwenden
 - Geräte `/dev/kfd` und `/dev/dri` in den Container durchreichen
-- in `anti-ki` (Gesamtstack und `llm_core/`) dafür:
+- in `PROLETARIA`, `anti-ki` und `anti-ki/llm_core` liegt dafür jeweils eine `docker-compose.amd.yml`:
   `docker compose -f docker-compose.yml -f docker-compose.amd.yml up -d`
 
 **Prüfen, ob die GPU wirklich rechnet:** `anti-ki/scripts/check_amd_gpu.sh`. Das Skript prüft
 Treiber, Image, GPU-Erkennung und `ollama ps` (Anteil GPU/CPU) und misst die Tokens pro Sekunde.
-Optionen: `--stack root|core`, `--model`, `--ctx`, `--no-start`.
+Optionen: `--stack root|core`, `--model`, `--ctx`, `--no-start`, `--container`
+(PROLETARIA-Stack: `--no-start --container proletaria-ollama`).
 
 Die RX 9070 XT (RDNA 4, `gfx1201`) wird offiziell erst ab **ROCm 7.2** unterstützt. Erkennt
 Ollama die Karte nicht, `HSA_OVERRIDE_GFX_VERSION=12.0.1` setzen.
