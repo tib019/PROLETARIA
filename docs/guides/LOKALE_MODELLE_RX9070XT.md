@@ -10,7 +10,7 @@ Messwerte sind **nicht** selbst nachgemessen.
 |---|---|---|---|---|
 | Allround / Analyse (Standard) | Qwen 3.8-27B (dicht) | `UD-Q3_K_XL` (~13,2 GB) | komplett im VRAM | c't-Tipp für 16-GB-Karten, dann bis 128K Kontext; etwas schlechter als Q4 |
 | Kurzer Kontext, beste Qualität | Qwen 3.8-27B | `UD-Q4_K_M` | komplett im VRAM | c't hat genau das auf der RX 9070 XT gemessen: 34,4 tok/s, aber nur 8K Kontext, keine Bilderkennung |
-| Coding-Agent (OpenCode o. Ä.) | Qwen 3.6-35B-A3B (MoE) | `Q4_K_M` (~24 GB) | ~⅓ der Gewichte im System-RAM | lässt viel VRAM für Kontext frei; Tempo auf der 9070 XT nicht gemessen |
+| Coding-Agent (OpenCode, proletariallm) | Qwen 3.6-35B-A3B (MoE, 40 Schichten) | `UD-Q4_K_M` (22,1 GB) | Experten teils im System-RAM | per **llama.cpp** (`--n-cpu-moe`), 64K Kontext; Tempo auf der 9070 XT nicht gemessen |
 | Experimentell, schnell | Qwen 3.8 Flash Next (125B MoE) | Q2_0 | VRAM + RAM (+ SSD) | Engine **Strata**; Strata nennt für die RX 9070 XT ~60 tok/s; bei 32 GB RAM nur die kleinste „Coder“-Variante |
 
 Grenzen bei 16 GB:
@@ -40,12 +40,13 @@ Optionen: `--stack root|core`, `--model`, `--ctx`, `--no-start`, `--container`
 
 Die RX 9070 XT (RDNA 4, `gfx1201`) wird offiziell erst ab **ROCm 7.2** unterstützt. Erkennt
 Ollama die Karte nicht, `HSA_OVERRIDE_GFX_VERSION=12.0.1` setzen.
-Ohne Docker geht alternativ llama.cpp mit dem **Vulkan**-Backend. Das braucht kein ROCm
-und ist auf RDNA 4 oft genauso schnell.
+llama.cpp läuft hier mit dem **Vulkan**-Backend. Das braucht kein ROCm, nur `/dev/dri`.
 
 ## Einbindung ins Konglomerat
 
-Alle Module sprechen Ollama an. Das Modell wird per Umgebungsvariable gesetzt:
+Die Python-Module (`llm-server`, `chat.py`, `anti-ki`) sprechen Ollamas eigene API an
+(`/api/chat`, `/api/generate`) und laufen daher **nur mit Ollama**. `proletariallm` nutzt die
+OpenAI-kompatible API und läuft mit Ollama **und** llama.cpp. Das Modell wird per Umgebungsvariable gesetzt:
 
 | Modul | Variable | Default |
 |---|---|---|
@@ -61,18 +62,30 @@ GGUF direkt von Hugging Face in Ollama holen:
 
 ```bash
 ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
-ollama pull hf.co/unsloth/<Qwen3.6-35B-A3B-Repo>:Q4_K_M   # Repo-Namen vorher prüfen
 export LLM_MODEL=hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
 ```
 
-Für MoE-Modelle mit llama.cpp die Experten in den RAM legen und den Rest auf die GPU:
+## llama.cpp für MoE-Modelle
+
+Ollama kann bei MoE-Modellen nicht steuern, welche Teile in den RAM wandern. llama.cpp
+kann das: `--n-cpu-moe N` legt die Experten der ersten N Schichten in den System-RAM,
+Attention und der Rest bleiben auf der GPU.
 
 ```bash
-llama-server -m qwen3.6-35b-a3b-Q4_K_M.gguf -ngl 99 --n-cpu-moe 20 -c 32768 \
-  --cache-type-k q8_0 --cache-type-v q8_0
+cd anti-ki
+scripts/start_llamacpp.sh                 # Qwen 3.6-35B-A3B UD-Q4_K_M, n-cpu-moe 20, 64K Kontext
+scripts/start_llamacpp.sh --n-cpu-moe 14  # mehr auf die GPU
+scripts/start_llamacpp.sh --stop
 ```
 
-`--n-cpu-moe` so weit senken, bis der VRAM voll ist.
+- Konfiguration: `anti-ki/llm_core/docker-compose.llamacpp.yml`
+  (Image `ghcr.io/ggml-org/llama.cpp:server-vulkan`, Modell wird per `-hf` von Hugging Face geladen)
+- API: `http://localhost:8080/v1` (OpenAI-kompatibel, Tool-Aufrufe via `--jinja`)
+- Das Skript stoppt vorher laufende Ollama-Container, weil beide sonst um die 16 GB VRAM konkurrieren
+- Startwert 20 von 40 Schichten: Das Modell hat 22,1 GB, also ~0,55 GB pro Schicht.
+  Ist nach dem Start noch VRAM frei, `--n-cpu-moe` schrittweise senken (schneller); bei
+  „out of memory“ erhöhen
+- Nur jede 4. Schicht nutzt volle Attention, daher bleibt der KV-Cache auch bei 64K klein
 
 ## Training (proletaria-llm)
 
