@@ -57,6 +57,8 @@ cp modules/anti-ki/config/.env.example modules/anti-ki/config/.env
 
 # Stack starten (Ollama + Neo4j + API-Services)
 docker compose up -d
+# Mit AMD-GPU (z. B. RX 9070 XT, ROCm 7.2+):
+# docker compose -f docker-compose.yml -f docker-compose.amd.yml up -d
 
 # Status prüfen
 curl http://localhost:8000/health   # ANTI-KI API
@@ -67,7 +69,7 @@ curl http://localhost:8001/health   # LLM-Server
 
 ```bash
 pip install -r requirements.txt
-ollama pull mistral  # oder eigenes ProletariaLLM-Modell
+ollama pull hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL  # Ersatzmodell, oder eigenes ProletariaLLM-Modell
 
 # Inhalt generieren und interaktiv freigeben
 python -m gramsci generate "Mietpreisbremse verlängern" --platform mastodon --lang de
@@ -195,6 +197,7 @@ PROLETARIA/
 | [Verhör-Guide](docs/guides/VERHOER_GUIDE.md) | Trainingsszenarien, Rechte, Notfallskript |
 | [Developer Guide](docs/guides/DEVELOPER_GUIDE.md) | Neue Module, Adapter, Architektur-Entscheidungen |
 | [Deployment Guide](docs/guides/DEPLOYMENT_GUIDE.md) | Docker, Ollama, Umgebungsvariablen |
+| [Lokale Modelle / RX 9070 XT](docs/guides/LOKALE_MODELLE_RX9070XT.md) | Modellwahl für 16 GB VRAM, AMD/ROCm, Faktencheck c't |
 
 ---
 
@@ -203,7 +206,7 @@ PROLETARIA/
 | Komponente | Minimum | Empfohlen |
 |-----------|---------|-----------|
 | RAM | 16 GB | 32 GB |
-| GPU | — | NVIDIA ≥ 8 GB VRAM |
+| GPU | — (nur CPU, sehr langsam) | ≥ 16 GB VRAM: NVIDIA oder AMD mit ROCm 7.2+ ([Guide](docs/guides/LOKALE_MODELLE_RX9070XT.md)) |
 | Speicher | 50 GB | 100 GB SSD |
 | Docker | ≥ 24.0 | aktuell |
 | Python | ≥ 3.11 | 3.12 |
